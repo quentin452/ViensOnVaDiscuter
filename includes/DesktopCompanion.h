@@ -8,7 +8,8 @@ public:
 
   void Initialize();
 
-  void Update();
+  // Ajouter deltaTime comme paramètre
+  void Update(float deltaTime);
 
   void Draw();
 
@@ -31,8 +32,17 @@ private:
   int desktopHeight;
 
   float timeSinceLastChange;
+  float timeSinceLastVelocityChange;
 
-  void HandleMovement();
+  float moveAccumulator;
+  float lastMouseCheckTime;
+  float mouseCheckInterval;
+  bool lastOpaqueState;
+
+  Vector2 renderOffset;
+  Vector2 companionPos;
+
+  void HandleMovement(float deltaTime);
 
   void HandleDragging(const bool *mouseOnOpaque);
 

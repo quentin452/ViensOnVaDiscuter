@@ -7,7 +7,7 @@
 
 DesktopCompanion::DesktopCompanion()
     : windowPos({0, 0}), dragOffset({0, 0}), velocity({2.0f, 1.5f}), dragging(false), passthrough(false),
-      desktopWidth(0), desktopHeight(0), pixels(nullptr) {
+      desktopWidth(0), desktopHeight(0), pixels(nullptr), timeSinceLastVelocityChange(0.0f), moveAccumulator(0.0f) {
   srand((unsigned int)time(NULL));
 }
 
@@ -22,7 +22,7 @@ DesktopCompanion::~DesktopCompanion() {
 }
 
 void DesktopCompanion::Initialize() {
-  SetConfigFlags(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST | FLAG_VSYNC_HINT);
+  SetConfigFlags(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
 
   InitWindow(WIN_WIDTH, WIN_HEIGHT, "ViensOnVaDiscuter");
   SetWindowOpacity(1.0f);
@@ -76,15 +76,16 @@ bool DesktopCompanion::IsMouseOnOpaquePixel() const {
   return false;
 }
 
-void DesktopCompanion::Update() {
+void DesktopCompanion::Update(float deltaTime) {
   const bool mouseOnOpaque = IsMouseOnOpaquePixel();
   HandleMousePassthrough(&mouseOnOpaque);
   HandleDragging(&mouseOnOpaque);
 
   if (!dragging) {
-    HandleMovement();
+    HandleMovement(deltaTime);
   }
 }
+
 void DesktopCompanion::HandleMousePassthrough(const bool *mouseOnOpaque) {
   if (!dragging) {
     if (*mouseOnOpaque) {
@@ -122,18 +123,20 @@ void DesktopCompanion::HandleDragging(const bool *mouseOnOpaque) {
     Vector2 winPos = GetWindowPosition();
     int mouseScreenX = GetMouseX() + winPos.x;
     int mouseScreenY = GetMouseY() + winPos.y;
-    SetWindowPosition(mouseScreenX - dragOffset.x, mouseScreenY - dragOffset.y);
+    static Vector2 lastWindowPos = {-1, -1};
+    Vector2 newPos = {mouseScreenX - dragOffset.x, mouseScreenY - dragOffset.y};
+    if ((int)newPos.x != (int)lastWindowPos.x || (int)newPos.y != (int)lastWindowPos.y) {
+      SetWindowPosition((int)newPos.x, (int)newPos.y);
+      lastWindowPos = newPos;
+    }
   }
 }
 
-void DesktopCompanion::HandleMovement() {
-  float deltaTime = GetFrameTime();
-
+void DesktopCompanion::HandleMovement(float deltaTime) {
   windowPos.x += velocity.x * deltaTime * 60.0f;
   windowPos.y += velocity.y * deltaTime * 60.0f;
 
-  static float timeSinceLastChange = 0.0f;
-  timeSinceLastChange += deltaTime;
+  timeSinceLastVelocityChange += deltaTime;
 
   if (windowPos.x < 0 || windowPos.x > desktopWidth - WIN_WIDTH) {
     velocity.x = -velocity.x + ((rand() % 3) - 1);
@@ -151,15 +154,17 @@ void DesktopCompanion::HandleMovement() {
   if (velocity.y < -5)
     velocity.y = -5;
 
-  if (timeSinceLastChange >= 2.0f) {
+  if (timeSinceLastVelocityChange >= 2.0f) {
     velocity.x += (rand() % 3) - 1;
     velocity.y += (rand() % 3) - 1;
-    timeSinceLastChange = 0.0f;
+    timeSinceLastVelocityChange = 0.0f;
   }
-
-  SetWindowPosition((int)windowPos.x, (int)windowPos.y);
+  static Vector2 lastWindowPos = {-1, -1};
+  if ((int)windowPos.x != (int)lastWindowPos.x || (int)windowPos.y != (int)lastWindowPos.y) {
+    SetWindowPosition((int)windowPos.x, (int)windowPos.y);
+    lastWindowPos = windowPos;
+  }
 }
-
 void DesktopCompanion::Draw() {
   BeginDrawing();
   ClearBackground(BLANK);
