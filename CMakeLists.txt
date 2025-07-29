@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/3rdparty/raylib-5.5_win64_msvc16/include
+    ${CMAKE_SOURCE_DIR}/includes
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -29,16 +30,24 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE "assets/exe/app.rc")
-    target_sources(${PROJECT_NAME} PRIVATE "assets/exe/resource.rc")
 
-    if(MSVC)
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
-        )
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        if(MSVC)
+            set_target_properties(${PROJECT_NAME} PROPERTIES
+                LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+            )
+        else()
+        endif()
     else()
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            LINK_FLAGS "-mwindows"
-        )
+        if(MSVC)
+            set_target_properties(${PROJECT_NAME} PROPERTIES
+                LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+            )
+        else()
+            set_target_properties(${PROJECT_NAME} PROPERTIES
+                LINK_FLAGS "-mwindows"
+            )
+        endif()
     endif()
 endif()
 
