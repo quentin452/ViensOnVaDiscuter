@@ -74,7 +74,10 @@ int main() {
       desktopHeight = monY + monH;
   }
 
+  float deltaTime = 0.0f;
   while (!WindowShouldClose()) {
+    deltaTime = GetFrameTime();
+
     Vector2 mouse = GetMousePosition();
     bool windowFocused = IsWindowFocused();
     if (windowFocused) {
@@ -118,8 +121,8 @@ int main() {
       SetWindowPosition(mouseScreenX - dragOffset.x,
                         mouseScreenY - dragOffset.y);
     } else {
-      windowPos.x += velocity.x;
-      windowPos.y += velocity.y;
+      windowPos.x += velocity.x * deltaTime * 60.0f;
+      windowPos.y += velocity.y * deltaTime * 60.0f;
 
       // Rebonds sur les bords du bureau (tous écrans)
       if (windowPos.x < 0 || windowPos.x > desktopWidth - WIN_WIDTH) {
