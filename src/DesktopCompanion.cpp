@@ -5,9 +5,8 @@
 #include <time.h>
 
 DesktopCompanion::DesktopCompanion()
-    : windowPos({0, 0}), dragOffset({0, 0}), velocity({2.0f, 1.5f}),
-      dragging(false), passthrough(false), desktopWidth(0), desktopHeight(0),
-      pixels(nullptr) {
+    : windowPos({0, 0}), dragOffset({0, 0}), velocity({2.0f, 1.5f}), dragging(false), passthrough(false),
+      desktopWidth(0), desktopHeight(0), pixels(nullptr) {
   srand((unsigned int)time(NULL));
 }
 
@@ -22,8 +21,7 @@ DesktopCompanion::~DesktopCompanion() {
 }
 
 void DesktopCompanion::Initialize() {
-  SetConfigFlags(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED |
-                 FLAG_WINDOW_TOPMOST | FLAG_VSYNC_HINT);
+  SetConfigFlags(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST | FLAG_VSYNC_HINT);
 
   InitWindow(WIN_WIDTH, WIN_HEIGHT, "ViensOnVaDiscuter");
   SetWindowOpacity(1.0f);
@@ -69,8 +67,7 @@ void DesktopCompanion::HandleMousePassthrough() {
   }
 
   bool mouseOnOpaque = false;
-  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width &&
-      mouse.y >= 0 && mouse.y < companionImg.height) {
+  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width && mouse.y >= 0 && mouse.y < companionImg.height) {
     Color px = pixels[(int)mouse.y * companionImg.width + (int)mouse.x];
     mouseOnOpaque = px.a > 0;
   }
@@ -91,8 +88,7 @@ void DesktopCompanion::HandleDragging() {
   bool windowFocused = IsWindowFocused();
 
   bool mouseOnOpaque = false;
-  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width &&
-      mouse.y >= 0 && mouse.y < companionImg.height) {
+  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width && mouse.y >= 0 && mouse.y < companionImg.height) {
     Color px = pixels[(int)mouse.y * companionImg.width + (int)mouse.x];
     mouseOnOpaque = px.a > 0;
   }
@@ -123,6 +119,9 @@ void DesktopCompanion::HandleMovement() {
   windowPos.x += velocity.x * deltaTime * 60.0f;
   windowPos.y += velocity.y * deltaTime * 60.0f;
 
+  static float timeSinceLastChange = 0.0f;
+  timeSinceLastChange += deltaTime;
+
   if (windowPos.x < 0 || windowPos.x > desktopWidth - WIN_WIDTH) {
     velocity.x = -velocity.x + ((rand() % 3) - 1);
   }
@@ -139,9 +138,10 @@ void DesktopCompanion::HandleMovement() {
   if (velocity.y < -5)
     velocity.y = -5;
 
-  if (rand() % 120 == 0) {
+  if (timeSinceLastChange >= 2.0f) {
     velocity.x += (rand() % 3) - 1;
     velocity.y += (rand() % 3) - 1;
+    timeSinceLastChange = 0.0f;
   }
 
   SetWindowPosition((int)windowPos.x, (int)windowPos.y);

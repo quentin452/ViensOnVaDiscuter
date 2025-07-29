@@ -30,6 +30,8 @@ private:
   int desktopWidth;
   int desktopHeight;
 
+  float timeSinceLastChange;
+
   void HandleMovement();
 
   void HandleDragging();
