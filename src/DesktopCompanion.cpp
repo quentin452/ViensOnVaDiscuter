@@ -1,9 +1,9 @@
 #include <Config.h>
 #include <DesktopCompanion.h>
 #include <Utils.h>
+#include <WinUtils.h>
 #include <stdlib.h>
 #include <time.h>
-
 
 DesktopCompanion::DesktopCompanion()
     : windowPos({0, 0}), dragOffset({0, 0}), velocity({2.0f, 1.5f}), dragging(false), passthrough(false),
@@ -39,6 +39,23 @@ void DesktopCompanion::Initialize() {
 
   pixels = LoadImageColors(companionImg);
 
+  WinImage wimg;
+  wimg.width = companionImg.width;
+  wimg.height = companionImg.height;
+
+  int pixelCount = companionImg.width * companionImg.height;
+  WinColor *wpixels = new WinColor[pixelCount];
+  for (int i = 0; i < pixelCount; ++i) {
+    wpixels[i].r = pixels[i].r;
+    wpixels[i].g = pixels[i].g;
+    wpixels[i].b = pixels[i].b;
+    wpixels[i].a = pixels[i].a;
+  }
+
+  SetWindowShapeFromTexture(wimg, wpixels);
+
+  delete[] wpixels;
+
   CenterWindow();
 }
 
@@ -50,51 +67,46 @@ void DesktopCompanion::CenterWindow() {
   SetWindowPosition(windowPos.x, windowPos.y);
 }
 
+bool DesktopCompanion::IsMouseOnOpaquePixel() const {
+  Vector2 mouse = GetMousePosition();
+  if (mouse.x >= 0 && mouse.x < companionImg.width && mouse.y >= 0 && mouse.y < companionImg.height) {
+    Color px = pixels[(int)mouse.y * companionImg.width + (int)mouse.x];
+    return px.a > 0;
+  }
+  return false;
+}
+
 void DesktopCompanion::Update() {
-  HandleMousePassthrough();
-  HandleDragging();
+  const bool mouseOnOpaque = IsMouseOnOpaquePixel();
+  HandleMousePassthrough(&mouseOnOpaque);
+  HandleDragging(&mouseOnOpaque);
 
   if (!dragging) {
     HandleMovement();
   }
 }
-
-void DesktopCompanion::HandleMousePassthrough() {
-  Vector2 mouse = GetMousePosition();
-  bool windowFocused = IsWindowFocused();
-
-  if (windowFocused) {
-    ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
-  }
-
-  bool mouseOnOpaque = false;
-  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width && mouse.y >= 0 && mouse.y < companionImg.height) {
-    Color px = pixels[(int)mouse.y * companionImg.width + (int)mouse.x];
-    mouseOnOpaque = px.a > 0;
-  }
-
+void DesktopCompanion::HandleMousePassthrough(const bool *mouseOnOpaque) {
   if (!dragging) {
-    if (mouseOnOpaque && passthrough) {
-      ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
-      passthrough = false;
-    } else if (!mouseOnOpaque && !passthrough) {
-      SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
-      passthrough = true;
+    if (*mouseOnOpaque) {
+      if (passthrough) {
+        SetClickThrough(false);
+        passthrough = false;
+      }
+    } else {
+      if (!passthrough) {
+        SetClickThrough(true);
+        passthrough = true;
+      }
     }
+  } else {
+    SetClickThrough(false);
+    passthrough = false;
   }
 }
-
-void DesktopCompanion::HandleDragging() {
+void DesktopCompanion::HandleDragging(const bool *mouseOnOpaque) {
   Vector2 mouse = GetMousePosition();
-  bool windowFocused = IsWindowFocused();
 
-  bool mouseOnOpaque = false;
-  if (windowFocused && mouse.x >= 0 && mouse.x < companionImg.width && mouse.y >= 0 && mouse.y < companionImg.height) {
-    Color px = pixels[(int)mouse.y * companionImg.width + (int)mouse.x];
-    mouseOnOpaque = px.a > 0;
-  }
-
-  if (!dragging && mouseOnOpaque && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+  if (!dragging && *mouseOnOpaque && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     Vector2 winPos = GetWindowPosition();
     dragOffset = mouse;
     windowPos = winPos;

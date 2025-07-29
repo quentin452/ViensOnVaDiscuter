@@ -34,7 +34,9 @@ private:
 
   void HandleMovement();
 
-  void HandleDragging();
+  void HandleDragging(const bool *mouseOnOpaque);
 
-  void HandleMousePassthrough();
+  void HandleMousePassthrough(const bool *mouseOnOpaque);
+
+  bool IsMouseOnOpaquePixel() const;
 };

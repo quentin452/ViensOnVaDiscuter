@@ -1,7 +1,11 @@
+#define WIN32_LEAN_AND_MEAN
+
+#include <raylib.h>
+
 #include <Utils.h>
 
 #include <Config.h>
-#include <raylib.h>
+
 #include <stdio.h>
 
 void InitLogging() {

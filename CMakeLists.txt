@@ -13,8 +13,10 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/DesktopCompanion.cpp
     src/Utils.cpp
+    src/WinUtils.cpp
     includes/DesktopCompanion.h
     includes/Utils.h
+    includes/WinUtils.h
     includes/Config.h
 )
 
