@@ -1,37 +1,31 @@
-# ViensOnVaDiscuter
+# Viens On Va Discuter - Desktop Companion
 
-A simple desktop companion application with a draggable character that says "Viens on va discuter!" in a speech bubble.
+Application de bureau créée avec Qt6 affichant un petit personnage avec une bulle de dialogue.
 
-## Features
-- Transparent window background
-- Draggable character with mouse
-- Always stays on top of other windows
-- Speech bubble with custom text
-- Auto-generated character image
+## Prérequis
 
-## Requirements
-- Python 3.7+
-- Pillow (PIL) library for image handling
+- CMake 3.16+
+- Qt6
+- Compilateur C++17 compatible
 
-## Installation & Usage
+## Compilation
 
-1. Install required packages:
 ```bash
-pip install -r requirements.txt
+mkdir build
+cd build
+cmake ..
+cmake --build .
 ```
 
-2. Run the application:
+## Exécution
+
 ```bash
-python main.py
+./ViensOnVaDiscuter
 ```
 
-Or simply double-click `run.bat` on Windows.
+## Fonctionnalités
 
-## How it works
-- The window has a transparent background (white areas become invisible)
-- Click and drag anywhere on the character to move it around your desktop
-- The character and speech bubble are drawn programmatically
-- The application stays on top of all other windows
-
-## Customization
-You can easily modify the character appearance, text, colors, and size by editing the `create_character_image()` method in `main.py`.
+- Fenêtre transparente toujours au premier plan
+- Personnage animé avec bulle de dialogue
+- Glisser-déposer pour déplacer la fenêtre
+- Interface minimaliste et mignonne

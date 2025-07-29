@@ -30,5 +30,5 @@ BEGIN
     END
 END
 
-// Application icon (if you have one)
-// IDI_ICON1 ICON "icon.ico"
+// Application icon
+1 ICON "icon.ico"
