@@ -1,8 +1,9 @@
-#include "DesktopCompanion.h"
-#include "Config.h"
-#include "Utils.h"
+#include <Config.h>
+#include <DesktopCompanion.h>
+#include <Utils.h>
 #include <stdlib.h>
 #include <time.h>
+
 
 DesktopCompanion::DesktopCompanion()
     : windowPos({0, 0}), dragOffset({0, 0}), velocity({2.0f, 1.5f}), dragging(false), passthrough(false),

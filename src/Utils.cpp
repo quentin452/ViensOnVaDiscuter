@@ -1,9 +1,8 @@
-#include "Utils.h"
+#include <Utils.h>
 
-#include "Config.h"
-#include "raylib.h"
+#include <Config.h>
+#include <raylib.h>
 #include <stdio.h>
-
 
 void InitLogging() {
   FILE *logFile = fopen(LOG_FILE_PATH, "w");

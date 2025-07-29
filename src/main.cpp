@@ -1,7 +1,7 @@
-#include "raylib.h"
+#include <raylib.h>
 
-#include "DesktopCompanion.h"
-#include "Utils.h"
+#include <DesktopCompanion.h>
+#include <Utils.h>
 
 int main() {
   // Initialiser le système de journalisation

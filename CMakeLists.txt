@@ -83,3 +83,5 @@ add_custom_target(sync_assets
 )
 
 add_dependencies(${PROJECT_NAME} sync_assets)
+
+include(${CMAKE_SOURCE_DIR}/scripts/GenerateCompileCommands.cmake)
