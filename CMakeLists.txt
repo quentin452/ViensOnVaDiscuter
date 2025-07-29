@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ViensOnVaDiscuter)
+project(ViensOnVaDiscuter LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +11,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/DesktopCompanion.cpp
+    src/Utils.cpp
+    includes/DesktopCompanion.h
+    includes/Utils.h
+    includes/Config.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
