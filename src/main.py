@@ -74,7 +74,7 @@ class DesktopCompanion:
         # Text in bubble
         try:
             # Try to use a better font if available
-            font = ImageFont.truetype("arial.ttf", 14)
+            font = ImageFont.truetype("asses/fonts/arial.ttf", 25)
         except:
             # Fallback to default font
             font = ImageFont.load_default()
@@ -92,7 +92,7 @@ class DesktopCompanion:
         draw.text((text_x, text_y), text, fill=(0, 0, 0, 255), font=font)
         
         # Save the image
-        img.save('character.png')
+        img.save('assets/textures/character.png')
         
         # Convert to PhotoImage for tkinter
         self.character_image = ImageTk.PhotoImage(img)
