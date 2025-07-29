@@ -1,0 +1,34 @@
+CompileFlags:
+  CompilationDatabase: build
+  Add: 
+    - -fexceptions
+    - -fms-compatibility
+    - -fms-extensions
+    - -fdelayed-template-parsing
+    - -Wno-c++98-compat
+    - -Wno-c++98-compat-pedantic
+    - -Wno-newline-eof
+    - -Wno-nonportable-include-path
+    - -Wno-nonportable-system-include-path
+    - -Wno-documentation
+    - -Wno-documentation-unknown-command
+    - -Wunused-variable
+Diagnostics:
+  ClangTidy:
+    Add: 
+      - modernize*
+      - performance*
+      - readability*
+      - misc-unused-parameters
+      - misc-unused-variables
+      - bugprone*
+
+SemanticHighlighting:
+  Enabled: true
+Index:
+  Background: Build
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
