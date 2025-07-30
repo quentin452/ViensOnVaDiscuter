@@ -2,13 +2,15 @@
 #include <raylib.h>
 #include <thread>
 
-
 #include <DesktopCompanion.h>
 #include <Utils.h>
 
 int main() {
   // Initialiser le système de journalisation
   InitLogging();
+
+  // Charger la configuration
+  LoadConfig();
 
   SetTargetFPS(60); // Limiter à 60 FPS
 

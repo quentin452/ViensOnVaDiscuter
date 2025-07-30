@@ -28,6 +28,8 @@ void DesktopCompanion::Initialize() {
   InitWindow(WIN_WIDTH, WIN_HEIGHT, "ViensOnVaDiscuter");
   SetWindowOpacity(1.0f);
 
+  LoadConfig();
+
   companionImg = LoadImage(CHARACTER_TEXTURE_PATH);
   ImageFormat(&companionImg, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
   companionTex = LoadTextureFromImage(companionImg);
@@ -134,68 +136,122 @@ void DesktopCompanion::HandleDragging(const bool *mouseOnOpaque) {
 }
 
 void DesktopCompanion::HandleMovement(float deltaTime) {
-  windowPos.x += velocity.x * deltaTime * 60.0f;
-  windowPos.y += velocity.y * deltaTime * 60.0f;
+  // Vérifier si le mode DVD est activé
+  bool dvdMode = GetConfigBool("DVD_MODE", true);
 
-  timeSinceLastVelocityChange += deltaTime;
+  if (dvdMode) {
+    // Mode DVD Logo - mouvement simple avec rebonds
+    float speed = GetConfigFloat("DVD_SPEED", 80.0f);
 
-  // Gérer les collisions avec les bords et corriger la position
-  bool bounced = false;
+    // Déplacer le compagnon
+    windowPos.x += velocity.x * speed * deltaTime;
+    windowPos.y += velocity.y * speed * deltaTime;
 
-  // Collision avec les bords horizontaux
-  if (windowPos.x < 0) {
-    windowPos.x = 0;                                        // Forcer la position dans les limites
-    velocity.x = std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse positive
-    bounced = true;
-  } else if (windowPos.x > desktopWidth - WIN_WIDTH) {
-    windowPos.x = desktopWidth - WIN_WIDTH;                  // Forcer la position dans les limites
-    velocity.x = -std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse négative
-    bounced = true;
-  }
+    // Vérifier les collisions avec les bords et faire rebondir
+    bool bounced = false;
 
-  // Collision avec les bords verticaux
-  if (windowPos.y < 0) {
-    windowPos.y = 0;                                        // Forcer la position dans les limites
-    velocity.y = std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse positive
-    bounced = true;
-  } else if (windowPos.y > desktopHeight - WIN_HEIGHT) {
-    windowPos.y = desktopHeight - WIN_HEIGHT;                // Forcer la position dans les limites
-    velocity.y = -std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse négative
-    bounced = true;
-  }
-
-  // Assurer une vitesse minimale après rebond pour éviter les blocages
-  if (bounced) {
-    if (std::abs(velocity.x) < 1.0f) {
-      velocity.x = (velocity.x >= 0) ? 1.0f : -1.0f;
+    // Rebond horizontal
+    if (windowPos.x <= 0) {
+      windowPos.x = 0;
+      velocity.x = 1.0f; // Rebondir vers la droite
+      bounced = true;
+    } else if (windowPos.x >= desktopWidth - WIN_WIDTH) {
+      windowPos.x = desktopWidth - WIN_WIDTH;
+      velocity.x = -1.0f; // Rebondir vers la gauche
+      bounced = true;
     }
-    if (std::abs(velocity.y) < 1.0f) {
-      velocity.y = (velocity.y >= 0) ? 1.0f : -1.0f;
+
+    // Rebond vertical
+    if (windowPos.y <= 0) {
+      windowPos.y = 0;
+      velocity.y = 1.0f; // Rebondir vers le bas
+      bounced = true;
+    } else if (windowPos.y >= desktopHeight - WIN_HEIGHT) {
+      windowPos.y = desktopHeight - WIN_HEIGHT;
+      velocity.y = -1.0f; // Rebondir vers le haut
+      bounced = true;
     }
-  }
 
-  // Limiter la vitesse maximale
-  if (velocity.x > 5)
-    velocity.x = 5;
-  if (velocity.x < -5)
-    velocity.x = -5;
-  if (velocity.y > 5)
-    velocity.y = 5;
-  if (velocity.y < -5)
-    velocity.y = -5;
-
-  // Changement de direction aléatoire périodique
-  if (timeSinceLastVelocityChange >= 2.0f) {
-    velocity.x += (rand() % 3) - 1;
-    velocity.y += (rand() % 3) - 1;
-    timeSinceLastVelocityChange = 0.0f;
-
-    // Assurer qu'on n'a pas une vitesse nulle
-    if (std::abs(velocity.x) < 0.5f) {
-      velocity.x = (rand() % 2 == 0) ? 1.0f : -1.0f;
+    // Normaliser la vélocité pour garder une vitesse constante
+    if (!bounced) {
+      float length = sqrtf(velocity.x * velocity.x + velocity.y * velocity.y);
+      if (length > 0) {
+        velocity.x /= length;
+        velocity.y /= length;
+      }
     }
-    if (std::abs(velocity.y) < 0.5f) {
-      velocity.y = (rand() % 2 == 0) ? 1.0f : -1.0f;
+
+  } else {
+    // Mode attraction/répulsion original
+    float baseSpeed = GetConfigFloat("BASE_MOVEMENT_SPEED", 60.0f);
+
+    windowPos.x += velocity.x * deltaTime * baseSpeed;
+    windowPos.y += velocity.y * deltaTime * baseSpeed;
+
+    timeSinceLastVelocityChange += deltaTime;
+
+    // Gérer les collisions avec les bords et corriger la position
+    bool bounced = false;
+
+    // Collision avec les bords horizontaux
+    if (windowPos.x < 0) {
+      windowPos.x = 0;                                        // Forcer la position dans les limites
+      velocity.x = std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse positive
+      bounced = true;
+    } else if (windowPos.x > desktopWidth - WIN_WIDTH) {
+      windowPos.x = desktopWidth - WIN_WIDTH;                  // Forcer la position dans les limites
+      velocity.x = -std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse négative
+      bounced = true;
+    }
+
+    // Collision avec les bords verticaux
+    if (windowPos.y < 0) {
+      windowPos.y = 0;                                        // Forcer la position dans les limites
+      velocity.y = std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse positive
+      bounced = true;
+    } else if (windowPos.y > desktopHeight - WIN_HEIGHT) {
+      windowPos.y = desktopHeight - WIN_HEIGHT;                // Forcer la position dans les limites
+      velocity.y = -std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse négative
+      bounced = true;
+    }
+
+    // Assurer une vitesse minimale après rebond pour éviter les blocages
+    if (bounced) {
+      if (std::abs(velocity.x) < 1.0f) {
+        velocity.x = (velocity.x >= 0) ? 1.0f : -1.0f;
+      }
+      if (std::abs(velocity.y) < 1.0f) {
+        velocity.y = (velocity.y >= 0) ? 1.0f : -1.0f;
+      }
+    }
+
+    // Limiter la vitesse maximale
+    if (velocity.x > 5)
+      velocity.x = 5;
+    if (velocity.x < -5)
+      velocity.x = -5;
+    if (velocity.y > 5)
+      velocity.y = 5;
+    if (velocity.y < -5)
+      velocity.y = -5;
+
+    // Changement de direction aléatoire périodique basé sur la configuration
+    float directionChangeInterval = GetConfigFloat("DIRECTION_CHANGE_INTERVAL", 2.0f);
+    if (timeSinceLastVelocityChange >= directionChangeInterval) {
+      velocity.x += (rand() % 3) - 1;
+      velocity.y += (rand() % 3) - 1;
+      timeSinceLastVelocityChange = 0.0f;
+
+      // Appliquer l'attraction vers les bords selon la configuration
+      ApplyEdgeAttraction(&velocity.x, &velocity.y, windowPos.x, windowPos.y, desktopWidth, desktopHeight);
+
+      // Assurer qu'on n'a pas une vitesse nulle
+      if (std::abs(velocity.x) < 0.5f) {
+        velocity.x = (rand() % 2 == 0) ? 1.0f : -1.0f;
+      }
+      if (std::abs(velocity.y) < 0.5f) {
+        velocity.y = (rand() % 2 == 0) ? 1.0f : -1.0f;
+      }
     }
   }
 
