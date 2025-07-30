@@ -12,5 +12,6 @@ struct WinColor {
 
 void SetClickThrough(bool enable);
 void SetWindowShapeFromTexture(const WinImage &image, const WinColor *pixels);
+void EnsureWindowTopmost();
 
 #endif // __WIN_UTILS_H__

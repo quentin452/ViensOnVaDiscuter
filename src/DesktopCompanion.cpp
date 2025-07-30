@@ -87,6 +87,9 @@ void DesktopCompanion::Update(float deltaTime) {
   HandleMousePassthrough(&mouseOnOpaque);
   HandleDragging(&mouseOnOpaque);
 
+  // Maintenir la fenêtre toujours au premier plan
+  EnsureTopmost();
+
   if (!dragging) {
     HandleMovement(deltaTime);
   }
@@ -305,3 +308,5 @@ void DesktopCompanion::CalculateActualDimensions() {
   UnloadImageColors(pixels);
   UnloadImage(companionImg);
 }
+
+void DesktopCompanion::EnsureTopmost() { EnsureWindowTopmost(); }

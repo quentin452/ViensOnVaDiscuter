@@ -61,8 +61,30 @@ void SetWindowShapeFromTexture(const WinImage &image, const WinColor *pixels) {
     DeleteObject(hRegion);
   }
 }
+
+void EnsureWindowTopmost() {
+  static DWORD lastCheck = 0;
+  DWORD currentTime = GetTickCount();
+
+  if (currentTime - lastCheck < 1000) {
+    return;
+  }
+  lastCheck = currentTime;
+
+  HWND hwnd = (HWND)GetWindowHandle();
+  if (hwnd) {
+    LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+    if (!(exStyle & WS_EX_TOPMOST)) {
+      SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+  }
+}
 #else
-void SetClickThrough(bool) {
+void SetClickThrough(bool enable) {
+  // TODO SUPPORT MORE PLATFORMS
+}
+
+void EnsureWindowTopmost() {
   // TODO SUPPORT MORE PLATFORMS
 }
 #endif

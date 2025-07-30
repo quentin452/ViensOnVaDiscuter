@@ -57,4 +57,6 @@ private:
   bool IsMouseOnOpaquePixel() const;
 
   void CalculateActualDimensions();
+
+  void EnsureTopmost();
 };
