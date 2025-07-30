@@ -2,6 +2,7 @@
 #include <DesktopCompanion.h>
 #include <Utils.h>
 #include <WinUtils.h>
+#include <cmath>
 #include <stdlib.h>
 #include <time.h>
 
@@ -138,13 +139,42 @@ void DesktopCompanion::HandleMovement(float deltaTime) {
 
   timeSinceLastVelocityChange += deltaTime;
 
-  if (windowPos.x < 0 || windowPos.x > desktopWidth - WIN_WIDTH) {
-    velocity.x = -velocity.x + ((rand() % 3) - 1);
-  }
-  if (windowPos.y < 0 || windowPos.y > desktopHeight - WIN_HEIGHT) {
-    velocity.y = -velocity.y + ((rand() % 3) - 1);
+  // Gérer les collisions avec les bords et corriger la position
+  bool bounced = false;
+
+  // Collision avec les bords horizontaux
+  if (windowPos.x < 0) {
+    windowPos.x = 0;                                        // Forcer la position dans les limites
+    velocity.x = std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse positive
+    bounced = true;
+  } else if (windowPos.x > desktopWidth - WIN_WIDTH) {
+    windowPos.x = desktopWidth - WIN_WIDTH;                  // Forcer la position dans les limites
+    velocity.x = -std::abs(velocity.x) + ((rand() % 3) - 1); // Assurer une vitesse négative
+    bounced = true;
   }
 
+  // Collision avec les bords verticaux
+  if (windowPos.y < 0) {
+    windowPos.y = 0;                                        // Forcer la position dans les limites
+    velocity.y = std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse positive
+    bounced = true;
+  } else if (windowPos.y > desktopHeight - WIN_HEIGHT) {
+    windowPos.y = desktopHeight - WIN_HEIGHT;                // Forcer la position dans les limites
+    velocity.y = -std::abs(velocity.y) + ((rand() % 3) - 1); // Assurer une vitesse négative
+    bounced = true;
+  }
+
+  // Assurer une vitesse minimale après rebond pour éviter les blocages
+  if (bounced) {
+    if (std::abs(velocity.x) < 1.0f) {
+      velocity.x = (velocity.x >= 0) ? 1.0f : -1.0f;
+    }
+    if (std::abs(velocity.y) < 1.0f) {
+      velocity.y = (velocity.y >= 0) ? 1.0f : -1.0f;
+    }
+  }
+
+  // Limiter la vitesse maximale
   if (velocity.x > 5)
     velocity.x = 5;
   if (velocity.x < -5)
@@ -154,11 +184,22 @@ void DesktopCompanion::HandleMovement(float deltaTime) {
   if (velocity.y < -5)
     velocity.y = -5;
 
+  // Changement de direction aléatoire périodique
   if (timeSinceLastVelocityChange >= 2.0f) {
     velocity.x += (rand() % 3) - 1;
     velocity.y += (rand() % 3) - 1;
     timeSinceLastVelocityChange = 0.0f;
+
+    // Assurer qu'on n'a pas une vitesse nulle
+    if (std::abs(velocity.x) < 0.5f) {
+      velocity.x = (rand() % 2 == 0) ? 1.0f : -1.0f;
+    }
+    if (std::abs(velocity.y) < 0.5f) {
+      velocity.y = (rand() % 2 == 0) ? 1.0f : -1.0f;
+    }
   }
+
+  // Mettre à jour la position de la fenêtre seulement si elle a changé
   static Vector2 lastWindowPos = {-1, -1};
   if ((int)windowPos.x != (int)lastWindowPos.x || (int)windowPos.y != (int)lastWindowPos.y) {
     SetWindowPosition((int)windowPos.x, (int)windowPos.y);
