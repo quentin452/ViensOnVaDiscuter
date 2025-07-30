@@ -42,6 +42,12 @@ private:
   Vector2 renderOffset;
   Vector2 companionPos;
 
+  // Dimensions réelles du personnage visible (pixels opaques)
+  int actualWidth;
+  int actualHeight;
+  int offsetX;
+  int offsetY;
+
   void HandleMovement(float deltaTime);
 
   void HandleDragging(const bool *mouseOnOpaque);
@@ -49,4 +55,6 @@ private:
   void HandleMousePassthrough(const bool *mouseOnOpaque);
 
   bool IsMouseOnOpaquePixel() const;
+
+  void CalculateActualDimensions();
 };

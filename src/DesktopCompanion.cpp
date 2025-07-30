@@ -2,6 +2,7 @@
 #include <DesktopCompanion.h>
 #include <Utils.h>
 #include <WinUtils.h>
+#include <algorithm>
 #include <cmath>
 #include <stdlib.h>
 #include <time.h>
@@ -58,6 +59,8 @@ void DesktopCompanion::Initialize() {
   SetWindowShapeFromTexture(wimg, wpixels);
 
   delete[] wpixels;
+
+  CalculateActualDimensions();
 
   CenterWindow();
 }
@@ -141,44 +144,57 @@ void DesktopCompanion::HandleMovement(float deltaTime) {
 
   if (dvdMode) {
     // Mode DVD Logo - mouvement simple avec rebonds
-    float speed = GetConfigFloat("DVD_SPEED", 80.0f);
+    float speed = GetConfigFloat("DVD_SPEED", 60.0f);
 
-    // Déplacer le compagnon
-    windowPos.x += velocity.x * speed * deltaTime;
-    windowPos.y += velocity.y * speed * deltaTime;
-
-    // Vérifier les collisions avec les bords et faire rebondir
-    bool bounced = false;
-
-    // Rebond horizontal
-    if (windowPos.x <= 0) {
-      windowPos.x = 0;
-      velocity.x = 1.0f; // Rebondir vers la droite
-      bounced = true;
-    } else if (windowPos.x >= desktopWidth - WIN_WIDTH) {
-      windowPos.x = desktopWidth - WIN_WIDTH;
-      velocity.x = -1.0f; // Rebondir vers la gauche
-      bounced = true;
-    }
-
-    // Rebond vertical
-    if (windowPos.y <= 0) {
-      windowPos.y = 0;
-      velocity.y = 1.0f; // Rebondir vers le bas
-      bounced = true;
-    } else if (windowPos.y >= desktopHeight - WIN_HEIGHT) {
-      windowPos.y = desktopHeight - WIN_HEIGHT;
-      velocity.y = -1.0f; // Rebondir vers le haut
-      bounced = true;
-    }
-
-    // Normaliser la vélocité pour garder une vitesse constante
-    if (!bounced) {
+    // Initialiser la vitesse seulement une fois si elle n'est pas définie
+    static bool velocityInitialized = false;
+    if (!velocityInitialized) {
       float length = sqrtf(velocity.x * velocity.x + velocity.y * velocity.y);
       if (length > 0) {
-        velocity.x /= length;
-        velocity.y /= length;
+        velocity.x = (velocity.x / length);
+        velocity.y = (velocity.y / length);
+      } else {
+        velocity.x = 0.707f; // sqrt(2)/2 pour mouvement diagonal
+        velocity.y = 0.707f;
       }
+      velocityInitialized = true;
+    }
+
+    // Déplacer le compagnon avec vitesse constante (éviter les micro-accumulations)
+    float moveX = velocity.x * speed * deltaTime;
+    float moveY = velocity.y * speed * deltaTime;
+
+    // Arrondir les petits mouvements pour éviter les tremblements
+    if (fabsf(moveX) < 0.1f)
+      moveX = 0.0f;
+    if (fabsf(moveY) < 0.1f)
+      moveY = 0.0f;
+
+    windowPos.x += moveX;
+    windowPos.y += moveY;
+
+    // Calculer les positions des bords du personnage visible
+    float leftEdge = windowPos.x + offsetX;
+    float rightEdge = windowPos.x + offsetX + actualWidth;
+    float topEdge = windowPos.y + offsetY;
+    float bottomEdge = windowPos.y + offsetY + actualHeight;
+
+    // Rebond horizontal avec correction précise de position
+    if (leftEdge <= 0 && velocity.x < 0) {
+      windowPos.x = -offsetX;
+      velocity.x = fabsf(velocity.x); // Force positive
+    } else if (rightEdge >= desktopWidth && velocity.x > 0) {
+      windowPos.x = desktopWidth - offsetX - actualWidth;
+      velocity.x = -fabsf(velocity.x); // Force negative
+    }
+
+    // Rebond vertical avec correction précise de position
+    if (topEdge <= 0 && velocity.y < 0) {
+      windowPos.y = -offsetY;
+      velocity.y = fabsf(velocity.y); // Force positive
+    } else if (bottomEdge >= desktopHeight && velocity.y > 0) {
+      windowPos.y = desktopHeight - offsetY - actualHeight;
+      velocity.y = -fabsf(velocity.y); // Force negative
     }
 
   } else {
@@ -234,32 +250,18 @@ void DesktopCompanion::HandleMovement(float deltaTime) {
       velocity.y = 5;
     if (velocity.y < -5)
       velocity.y = -5;
-
-    // Changement de direction aléatoire périodique basé sur la configuration
-    float directionChangeInterval = GetConfigFloat("DIRECTION_CHANGE_INTERVAL", 2.0f);
-    if (timeSinceLastVelocityChange >= directionChangeInterval) {
-      velocity.x += (rand() % 3) - 1;
-      velocity.y += (rand() % 3) - 1;
-      timeSinceLastVelocityChange = 0.0f;
-
-      // Appliquer l'attraction vers les bords selon la configuration
-      ApplyEdgeAttraction(&velocity.x, &velocity.y, windowPos.x, windowPos.y, desktopWidth, desktopHeight);
-
-      // Assurer qu'on n'a pas une vitesse nulle
-      if (std::abs(velocity.x) < 0.5f) {
-        velocity.x = (rand() % 2 == 0) ? 1.0f : -1.0f;
-      }
-      if (std::abs(velocity.y) < 0.5f) {
-        velocity.y = (rand() % 2 == 0) ? 1.0f : -1.0f;
-      }
-    }
   }
 
-  // Mettre à jour la position de la fenêtre seulement si elle a changé
+  // Mettre à jour la position de la fenêtre avec un seuil de mouvement minimum
   static Vector2 lastWindowPos = {-1, -1};
-  if ((int)windowPos.x != (int)lastWindowPos.x || (int)windowPos.y != (int)lastWindowPos.y) {
-    SetWindowPosition((int)windowPos.x, (int)windowPos.y);
-    lastWindowPos = windowPos;
+  int newPosX = (int)roundf(windowPos.x);
+  int newPosY = (int)roundf(windowPos.y);
+
+  // Seulement mettre à jour si le mouvement est significatif (évite les micro-tremblements)
+  if (abs(newPosX - (int)lastWindowPos.x) >= 1 || abs(newPosY - (int)lastWindowPos.y) >= 1) {
+    SetWindowPosition(newPosX, newPosY);
+    lastWindowPos.x = (float)newPosX;
+    lastWindowPos.y = (float)newPosY;
   }
 }
 void DesktopCompanion::Draw() {
@@ -270,3 +272,36 @@ void DesktopCompanion::Draw() {
 }
 
 bool DesktopCompanion::ShouldClose() const { return WindowShouldClose(); }
+
+void DesktopCompanion::CalculateActualDimensions() {
+  // Calculer les dimensions réelles du personnage (pixels opaques)
+  Image companionImg = LoadImageFromTexture(companionTex);
+  Color *pixels = LoadImageColors(companionImg);
+
+  int minX = companionImg.width;
+  int maxX = 0;
+  int minY = companionImg.height;
+  int maxY = 0;
+
+  // Trouver les limites des pixels opaques
+  for (int row = 0; row < companionImg.height; row++) {
+    for (int col = 0; col < companionImg.width; col++) {
+      Color pixel = pixels[(row * companionImg.width) + col];
+      if (pixel.a > 0) { // Pixel opaque
+        minX = std::min(minX, col);
+        maxX = std::max(maxX, col);
+        minY = std::min(minY, row);
+        maxY = std::max(maxY, row);
+      }
+    }
+  }
+
+  // Calculer les dimensions et offsets
+  actualWidth = maxX - minX + 1;
+  actualHeight = maxY - minY + 1;
+  offsetX = minX;
+  offsetY = minY;
+
+  UnloadImageColors(pixels);
+  UnloadImage(companionImg);
+}
